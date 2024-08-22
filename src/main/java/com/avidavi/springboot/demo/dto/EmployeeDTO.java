@@ -1,6 +1,8 @@
 package com.avidavi.springboot.demo.dto;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
+import com.avidavi.springboot.demo.annotations.EmplaoyeeRoleValidation;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -23,8 +25,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EmployeeDTO {
-	
-	
+
 	private Long id;
 	@NotBlank(message = "Name of employee cannot be blank.")
 	@Size(min = 3, max = 20)
@@ -40,12 +41,14 @@ public class EmployeeDTO {
 	private Integer age;
 	@Past(message = "Employee date of joining should be past date.")
 	@NotNull(message = "Employee date of joining cannot be null.")
-	private LocalDateTime dateOfJoining;
+	private LocalDate dateOfJoining;
 	@NotBlank(message = "Email of employee cannot be blank.")
 	@Email
 	private String email;
 	@NotBlank(message = "Role of employee cannot be blank.")
-	@Pattern(regexp = "^(USER|ADMIN)$")
+	// @Pattern(regexp = "^(USER|ADMIN)$", message = "Role of user should be either
+	// Admin or User")
+	@EmplaoyeeRoleValidation
 	private String role;
 	private boolean isActive;
 

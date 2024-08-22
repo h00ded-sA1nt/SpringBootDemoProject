@@ -1,9 +1,12 @@
 package com.avidavi.springboot.demo.services.impl;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.util.ReflectionUtils;
 import org.springframework.stereotype.Service;
 
 import com.avidavi.springboot.demo.dto.EmployeeDTO;
@@ -34,9 +37,51 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 	@Override
-	public EmployeeDTO getEmployeeById(Long id) throws ResourceNotFoundException {
-		Employee employee = employeeRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + id));
+	public EmployeeDTO getEmployeeById(Long employeeId) throws ResourceNotFoundException {
+		Employee employee = employeeRepository.findById(employeeId)
+				.orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + employeeId));
 		return modelMapper.map(employee, EmployeeDTO.class);
 	}
+
+	@Override
+	public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
+		Employee employee = modelMapper.map(employeeDTO, Employee.class);
+		Employee savedEmployee = employeeRepository.save(employee);
+		return modelMapper.map(savedEmployee, EmployeeDTO.class);
+	}
+
+	@Override
+	public EmployeeDTO updateEmployeeById(Long employeeId, EmployeeDTO employeeDTO) {
+		isExistsByEmployeeId(employeeId);
+		Employee employee = modelMapper.map(employeeDTO, Employee.class);
+		employee.setId(employeeId);
+		Employee savedEmployee = employeeRepository.save(employee);
+		return modelMapper.map(savedEmployee, EmployeeDTO.class);
+	}
+
+	@Override
+	public EmployeeDTO updatePartialEmployeeById(Long employeeId, Map<String, Object> updates) {
+		isExistsByEmployeeId(employeeId);
+		Employee employee = employeeRepository.findById(employeeId).get();
+		updates.forEach((field, value) -> {
+			Field fieldToBeUpdated = ReflectionUtils.findRequiredField(Employee.class, field);
+			fieldToBeUpdated.setAccessible(true);
+			ReflectionUtils.setField(fieldToBeUpdated, employee, value);
+		});
+		return modelMapper.map(employeeRepository.save(employee), EmployeeDTO.class);
+	}
+
+	@Override
+	public boolean deleteEmployeeById(Long employeeId) {
+		isExistsByEmployeeId(employeeId);
+		employeeRepository.deleteById(employeeId);
+		return true;
+	}
+
+	private void isExistsByEmployeeId(Long employeeId) {
+		boolean existsById = employeeRepository.existsById(employeeId);
+		if (!existsById)
+			throw new ResourceNotFoundException("Employee not found with id : " + employeeId);
+	}
+
 }
