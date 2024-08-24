@@ -9,6 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.stereotype.Service;
 
+import com.avidavi.springboot.demo.configs.EmployeeMapper;
 import com.avidavi.springboot.demo.dto.EmployeeDTO;
 import com.avidavi.springboot.demo.entities.Employee;
 import com.avidavi.springboot.demo.exceptions.ResourceNotFoundException;
@@ -20,18 +21,22 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	private final EmployeeRepository employeeRepository;
 	private final ModelMapper modelMapper;
+	private final EmployeeMapper employeeMapper;
 
-	public EmployeeServiceImpl(EmployeeRepository employeeRepository, ModelMapper modelMapper) {
+	public EmployeeServiceImpl(EmployeeRepository employeeRepository, ModelMapper modelMapper,
+			EmployeeMapper employeeMapper) {
 		this.employeeRepository = employeeRepository;
-		this.modelMapper = new ModelMapper();
+		this.modelMapper = modelMapper;
+		this.employeeMapper = employeeMapper;
 	}
 
 	@Override
 	public List<EmployeeDTO> getAllEmployees() {
 		List<Employee> employees = employeeRepository.findAll();
+
 		return employees
 				.stream()
-				.map(employee -> modelMapper.map(employee, EmployeeDTO.class))
+				.map(employee -> employeeMapper.toDto(employee))
 				.collect(Collectors.toList());
 
 	}
@@ -40,14 +45,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public EmployeeDTO getEmployeeById(Long employeeId) throws ResourceNotFoundException {
 		Employee employee = employeeRepository.findById(employeeId)
 				.orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + employeeId));
-		return modelMapper.map(employee, EmployeeDTO.class);
+		// return modelMapper.map(employee, EmployeeDTO.class);
+		return employeeMapper.toDto(employee);
 	}
 
 	@Override
 	public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
 		Employee employee = modelMapper.map(employeeDTO, Employee.class);
 		Employee savedEmployee = employeeRepository.save(employee);
-		return modelMapper.map(savedEmployee, EmployeeDTO.class);
+		// return modelMapper.map(savedEmployee, EmployeeDTO.class);
+		return employeeMapper.toDto(savedEmployee);
 	}
 
 	@Override
@@ -56,7 +63,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Employee employee = modelMapper.map(employeeDTO, Employee.class);
 		employee.setId(employeeId);
 		Employee savedEmployee = employeeRepository.save(employee);
-		return modelMapper.map(savedEmployee, EmployeeDTO.class);
+		// return modelMapper.map(savedEmployee, EmployeeDTO.class);
+		return employeeMapper.toDto(savedEmployee);
 	}
 
 	@Override
@@ -68,7 +76,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 			fieldToBeUpdated.setAccessible(true);
 			ReflectionUtils.setField(fieldToBeUpdated, employee, value);
 		});
-		return modelMapper.map(employeeRepository.save(employee), EmployeeDTO.class);
+		// return modelMapper.map(employeeRepository.save(employee), EmployeeDTO.class);
+		return employeeMapper.toDto(employeeRepository.save(employee));
 	}
 
 	@Override
